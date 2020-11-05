@@ -1,21 +1,19 @@
 package main_package;
 
 import java.awt.*;
-import java.util.ArrayList;
 
 public class Sun {
-    //Graphics g;
     int x;
     int y;
     double rx;
     double ry;
     RealPoint point;
+    RealPoint helpPoint;
     int r;
     int R;
     int n;
     Color c;
-    ArrayList<ScreenPoint> screenX;
-    ArrayList<ScreenPoint> screenY;
+    boolean isChosen;
 
     public Sun(/*Graphics g, */int x, int y, int r, int R, int n, Color c) {
         this.x = x;
@@ -26,12 +24,16 @@ public class Sun {
         this.c = c;
     }
 
-    public Sun(RealPoint p) {
+    public Sun(RealPoint p, RealPoint helpPoint, int r) {
         this.point = p;
+        this.helpPoint = helpPoint;
         this.rx = p.getX();
         this.ry = p.getY();
-        this.r = 30;
-        //this.screenX = new ArrayList<>();
+        this.n = 12;
+        this.r = r;
+        this.R = 2 * r;
+        this.c = Color.ORANGE;
+        this.isChosen = false;
     }
 
     public int getX() {
@@ -57,6 +59,10 @@ public class Sun {
         return c;
     }
 
+    public boolean isChosen() {
+        return isChosen;
+    }
+
     public void setN(int n) {
         this.n = n;
     }
@@ -69,8 +75,28 @@ public class Sun {
         this.y = y;
     }
 
-    public void setR(int r) {
+    public void setRSun(int r) {
         this.r = r;
+    }
+
+    public void setRealPoint(RealPoint point) {
+        this.point = point;
+    }
+
+    public void setColor(Color c) {
+        this.c = c;
+    }
+
+    public void setIsChosen(boolean chosen) {
+        this.isChosen = chosen;
+    }
+
+    public void setHelpPoint(RealPoint helpPoint) {
+        this.helpPoint = helpPoint;
+    }
+
+    public void convertSize(double scale) {
+        this.setRSun((int)(r / scale));
     }
 
     public static void drawSun(Graphics g, int x, int y, int r, int R, int n, Color c) {
