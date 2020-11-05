@@ -6,7 +6,7 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
-public class DrawPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener {
+public class DrawPanel extends JPanel implements MouseListener, MouseMotionListener, MouseWheelListener, KeyListener {
     private ArrayList<Line> lines = new ArrayList<>();
     private ScreenConverter sc = new ScreenConverter(-2, 2, 4, 4, 800, 600);
     private Line yAxis = new Line(0, -1, 0, 1);
@@ -17,6 +17,7 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
         this.addMouseListener(this);
         this.addMouseMotionListener(this);
         this.addMouseWheelListener(this);
+        this.addKeyListener(this);
     }
 
     //private //подсветка линии: переводить все линии в экр коорд + знаем экр коорд мыши, можем выичслить расстояние от мыши до линии
@@ -46,12 +47,7 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
        if (currentLine != null)
            drawLine(ld, currentLine);*/
 
-       /*Sun miniSun = new Sun( 150,150, 30, 100, 12, Color.ORANGE);
-       suns.add(miniSun);*/
-       RealPoint rp = new RealPoint(50, 50);
-       //drawSun(miniSun);
        for (Sun s : suns) {
-           //drawSun(gr, s);
            drawRealSun(gr, s);
        }
        /**/
@@ -62,16 +58,30 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
     private void drawLine(LineDrawer ld, Line l) {
        ld.drawLine(sc.realToScreen(l.getP1()), sc.realToScreen(l.getP2()));
     }
-    private void drawSunG(Graphics g, int x, int y, int r, int R, int n, Color c) {
-        g.setColor(c);
-        g.fillOval(x + r, y + r, 2 * r,2 * r);
-    }
-    private void drawSun(Graphics g, Sun sun) {
-        drawSunG(g, sun.getX(), sun.getY(), sun.getRSun(), sun.getRRays(), sun.getN(), sun.getColor());
-    }
+
     private void drawRealSun(Graphics g, Sun sun) {
-        g.setColor(Color.ORANGE);
-        g.fillOval(sc.realToScreen(sun.point).getX(), sc.realToScreen(sun.point).getY(), 60, 60);
+        g.setColor(sun.getColor());
+        g.fillOval(sc.realToScreen(sun.point).getX(), sc.realToScreen(sun.point).getY(), 2 * sun.getRSun(), 2 * sun.getRSun());
+
+        int x = sc.realToScreen(sun.point).getX() + sun.getRSun();
+        int y = sc.realToScreen(sun.point).getY() + sun.getRSun();
+        int r = sun.getRSun();
+        int R = sun.getRRays();
+
+        double da = 2 * Math.PI / sun.getN();
+        for (int i = 0; i < sun.getN(); i++) {
+            int dx1, dy1, dx2, dy2;
+            dx1 = (int)(x + r * Math.cos(da * i));
+            dy1 = (int)(y + r * Math.sin(da * i));
+            dx2 = (int)(x + R * Math.cos(da * i));
+            dy2 = (int)(y + R * Math.sin(da * i));
+
+            g.drawLine(dx1 , dy1 , dx2 , dy2 );
+        }
+        if (sun.isChosen){
+            g.setColor(Color.BLACK); //типо контур, но пока фигня какая-то; добавить флаг, чтобы он убирался
+            g.drawRect(sc.realToScreen(sun.point).getX(), sc.realToScreen(sun.point).getY(), 2 * sun.getRSun(), 2 * sun.getRSun());
+        }
     }
 
 
@@ -83,23 +93,16 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
     public void mouseClicked(MouseEvent e) {
         ScreenPoint currSc = new ScreenPoint(e.getX(), e.getY());
         if (e.getClickCount() == 2) {
-            //currentSun = find(e.getPoint().x-60, e.getPoint().y-60, 30,30,12, Color.ORANGE);
             currentSun = find(currSc);
             if (currentSun != null) {
                 removeSun(currentSun);
             }
+        } else if (e.getButton() == MouseEvent.BUTTON3) {
+            currentSun = find(currSc);
+            currentSun.setColor(Color.BLUE);
         }
     }
 
-    /*private Sun find(ScreenPoint p) {
-        RealPoint currRp = sc.screenToReal(p);
-        for (Sun s : suns) {
-            if (currRp.getX() >= s.rx - 5 && currRp.getX() <= s.rx + 5 &&
-                    currRp.getY() >= s.ry - 5 && currRp.getY() <= s.ry + 5)
-                return s;
-        }
-        return null;
-    }*/
     private Sun find(ScreenPoint p) {
         for (Sun s : suns) {
             ScreenPoint sunScP = sc.realToScreen(s.point);
@@ -116,27 +119,41 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
         repaint();
     }
 
+    private int flag = 0;
     @Override
     public void mousePressed(MouseEvent e) {
-        //currentSun = find(e.getPoint());
         //currentSun = new Sun(e.getX() - 60, e.getY() - 60, 30, 30, 12, Color.ORANGE);
-        ScreenPoint currSc = new ScreenPoint(e.getX(), e.getY());
-        currentSun = find(currSc);
-        if (currentSun == null) {
-            ScreenPoint currP = new ScreenPoint(e.getX() - 30, e.getY() - 30);
-            currentSun = new Sun(sc.screenToReal(currP));
-            suns.add(currentSun);
+        if (e.getButton() == MouseEvent.BUTTON1) {
+            ScreenPoint currSc = new ScreenPoint(e.getX(), e.getY());
+            currentSun = find(currSc);
+            if (currentSun == null) {
+                ScreenPoint currP = new ScreenPoint(e.getX() - 30, e.getY() - 30);  //30 - радиус, поменять потом
+                ScreenPoint helpPoint = new ScreenPoint(e.getX(), e.getY());
+                int r = Math.abs(helpPoint.getX() - currP.getX());
+                currentSun = new Sun(sc.screenToReal(currP), sc.screenToReal(helpPoint), r);
+                suns.add(currentSun);
+                currentSun = null;
+            }
+            repaint();
+
+            if (currentSun != null ) {
+                if (flag == 0) {
+                    currentSun.setIsChosen(true);
+                    flag = 1;
+                } else {
+                    currentSun.setIsChosen(false);
+                    flag = 0;
+                }
+            }
         }
-        repaint();
-
-
-        /*if (e.getButton() == MouseEvent.BUTTON3) {
+//придумать нормально, какая кнопка за что отвечает
+        if (e.getButton() == MouseEvent.BUTTON3) {
             prevDrag = new ScreenPoint(e.getX(), e.getY());
-        } else if (e.getButton() == MouseEvent.BUTTON1) {
+        } /*else if (e.getButton() == MouseEvent.BUTTON1) {
             currentLine = new Line(sc.screenToReal(new ScreenPoint(e.getX(), e.getY())),   //начальная точка (в момент нажатия)
-                                        sc.screenToReal(new ScreenPoint(e.getX(), e.getY())));
-        }
-        repaint();*/
+                    sc.screenToReal(new ScreenPoint(e.getX(), e.getY())));
+        }*/
+        repaint();
     }
 
     @Override
@@ -162,26 +179,45 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
 
     @Override
     public void mouseDragged(MouseEvent e) {
-        ScreenPoint current = new ScreenPoint(e.getX(), e.getY());
+        ScreenPoint current = new ScreenPoint(e.getX() - 30, e.getY() - 30);
+        ScreenPoint helpPoint = new ScreenPoint(e.getX(), e.getY());
+            if (currentSun != null) {
+                currentSun.setRealPoint(sc.screenToReal(current));
+                currentSun.setHelpPoint(sc.screenToReal(helpPoint));
+                repaint();
+            }
+
+        ScreenPoint curr = new ScreenPoint(e.getX(), e.getY());
         if (prevDrag != null) {
-            ScreenPoint delta = new ScreenPoint(current.getX() - prevDrag.getX(),
-                    current.getY() - prevDrag.getY());
+            ScreenPoint delta = new ScreenPoint(
+                    curr.getX() - prevDrag.getX(),
+                    curr.getY() - prevDrag.getY());
             RealPoint deltaReal = sc.screenToReal(delta);
             RealPoint zeroReal = sc.screenToReal(new ScreenPoint(0, 0));
-            RealPoint vector = new RealPoint(deltaReal.getX() - zeroReal.getX(), deltaReal.getY() - zeroReal.getY());
+            RealPoint vector = new RealPoint(
+                    deltaReal.getX() - zeroReal.getX(),
+                    deltaReal.getY() - zeroReal.getY());
             sc.setX(sc.getX() - vector.getX());
             sc.setY(sc.getY() - vector.getY());
-            prevDrag = current;
+            prevDrag = curr;
         }
-        if (currentLine != null) {
+        /*if (currentLine != null) {
             currentLine.setP2(sc.screenToReal(current));  //линия следит за мышкой
-        }
+        }*/
         repaint();
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-
+        ScreenPoint p = new ScreenPoint(e.getX(), e.getY());
+        if (find(p) == null)
+            setCursor(Cursor.getDefaultCursor());
+        else {
+            if (find(p).isChosen)
+                setCursor(Cursor.getPredefinedCursor(Cursor.SE_RESIZE_CURSOR));
+            else
+                setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
     }
 
     @Override
@@ -194,7 +230,30 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
         }
         sc.setW(sc.getW() * scale);
         sc.setH(sc.getH() * scale);
+        for (Sun s : suns) {
+            s.setRSun(Math.abs(sc.realToScreen(s.point).getX() - sc.realToScreen(s.helpPoint).getX()));
+        }
         repaint();
+    }
+
+
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DELETE) {
+            removeSun(suns.get(0));
+            //suns.remove(0);
+        }
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
     }
 }
 
