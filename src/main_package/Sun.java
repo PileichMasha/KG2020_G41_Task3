@@ -22,6 +22,10 @@ public class Sun {
         this.markers = new ArrayList<>();
     }
 
+    public RealPoint getPoint() {
+        return point;
+    }
+
     public int getRSun() {
         return r;
     }
@@ -61,7 +65,7 @@ public class Sun {
         this.R = R;
     }
 
-    public void setRealPoint(RealPoint point) {
+    public void setPoint(RealPoint point) {
         this.point = point;
     }
 

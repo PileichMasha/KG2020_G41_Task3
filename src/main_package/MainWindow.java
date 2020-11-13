@@ -7,6 +7,7 @@ public class MainWindow extends JFrame {
 
     public MainWindow() {
         dp = new DrawPanel();
+        dp.setFocusable(true);
         this.add(dp);
     }
 }
