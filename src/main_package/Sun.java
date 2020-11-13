@@ -1,47 +1,25 @@
 package main_package;
 
 import java.awt.*;
+import java.util.ArrayList;
 
 public class Sun {
-    int x;
-    int y;
-    double rx;
-    double ry;
-    RealPoint point;
-    RealPoint helpPoint;
-    int r;
-    int R;
-    int n;
-    Color c;
+    private RealPoint point;  //центр
+    private int r;  //радиус солнца
+    private int R;  //радиус лучиков
+    private int n;  //количество лучиков
+    private Color c;
     boolean isChosen;
+    private ArrayList<Marker> markers;
 
-    public Sun(/*Graphics g, */int x, int y, int r, int R, int n, Color c) {
-        this.x = x;
-        this.y = y;
-        this.r = r;
-        this.R = R;
-        this.n = n;
-        this.c = c;
-    }
-
-    public Sun(RealPoint p, RealPoint helpPoint, int r) {
-        this.point = p;
-        this.helpPoint = helpPoint;
-        this.rx = p.getX();
-        this.ry = p.getY();
-        this.n = 12;
+    public Sun(RealPoint point, int r) {
+        this.point = point;
+        this.n = 20;
         this.r = r;
         this.R = 2 * r;
         this.c = Color.ORANGE;
         this.isChosen = false;
-    }
-
-    public int getX() {
-        return x;
-    }
-
-    public int getY() {
-        return y;
+        this.markers = new ArrayList<>();
     }
 
     public int getRSun() {
@@ -63,20 +41,24 @@ public class Sun {
         return isChosen;
     }
 
+    public ArrayList<Marker> getMarkers() {
+        return markers;
+    }
+
+    public void setMarkers(ArrayList<Marker> markers) {
+        this.markers = markers;
+    }
+
     public void setN(int n) {
         this.n = n;
     }
 
-    public void setX(int x) {
-        this.x = x;
-    }
-
-    public void setY(int y) {
-        this.y = y;
-    }
-
     public void setRSun(int r) {
         this.r = r;
+    }
+
+    public void setRRays(int R) {
+        this.R = R;
     }
 
     public void setRealPoint(RealPoint point) {
@@ -91,16 +73,4 @@ public class Sun {
         this.isChosen = chosen;
     }
 
-    public void setHelpPoint(RealPoint helpPoint) {
-        this.helpPoint = helpPoint;
-    }
-
-    public void convertSize(double scale) {
-        this.setRSun((int)(r / scale));
-    }
-
-    public static void drawSun(Graphics g, int x, int y, int r, int R, int n, Color c) {
-        g.setColor(c);
-        g.fillOval(x - r, y - r, 2 * r,2 * r);
-    }
 }
