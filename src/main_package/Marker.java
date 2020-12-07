@@ -3,23 +3,31 @@ package main_package;
 import java.awt.*;
 
 public class Marker {
-    private RealPoint point;
+    //private RealPoint point;
+    private ScreenPoint point;
     private int size;
     private MarkerType type;
     private Color c;
 
-    public Marker(RealPoint point, int size, MarkerType type) {
+    public Marker(ScreenPoint point, int size, MarkerType type) {
         this.point = point;
         this.size = size;
         this.type = type;
         this.c = Color.BLACK;
     }
 
-    public RealPoint getPoint() {
+    /*public Marker(RealPoint point, int size, MarkerType type) {
+        this.point = point;
+        this.size = size;
+        this.type = type;
+        this.c = Color.BLACK;
+    }*/
+
+    public ScreenPoint getPoint() {
         return point;
     }
 
-    public void setPoint(RealPoint point) {
+    public void setPoint(ScreenPoint point) {
         this.point = point;
     }
 

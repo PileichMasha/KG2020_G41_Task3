@@ -49,8 +49,12 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
        if (currentLine != null)
            drawLine(ld, currentLine);*/
 
+        /*for (ScreenSun s : screenSuns) {
+            drawScreenSun(gr, s);
+        }*/
+
        for (Sun s : suns) {
-           drawRealSun(gr, s);
+           drawSun(gr, s);
        }
        /**/
        g.drawImage(bi, 0, 0, null);
@@ -61,13 +65,14 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
        ld.drawLine(sc.realToScreen(l.getP1()), sc.realToScreen(l.getP2()));
     }
 
-    private void drawRealSun(Graphics g, Sun sun) {
+
+    private void drawSun(Graphics g, Sun sun) {
         int r = sun.getRSun();
         g.setColor(sun.getColor());
-        g.fillOval(sc.realToScreen(sun.getPoint()).getX()-r, sc.realToScreen(sun.getPoint()).getY()-r, 2 * sun.getRSun(), 2 * sun.getRSun());
+        g.fillOval(sun.getPoint().getX()-r, sun.getPoint().getY()-r, 2 * sun.getRSun(), 2 * sun.getRSun());
 
-        int x = sc.realToScreen(sun.getPoint()).getX()-r + sun.getRSun();
-        int y = sc.realToScreen(sun.getPoint()).getY()-r + sun.getRSun();
+        int x = sun.getPoint().getX()-r + sun.getRSun();
+        int y = sun.getPoint().getY()-r + sun.getRSun();
 
         int R = sun.getRRays();
 
@@ -81,36 +86,36 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
 
             g.drawLine(dx1 , dy1 , dx2 , dy2 );
         }
-        if (sun.isChosen){
+        if (sun.isChosen()){
             g.setColor(Color.BLACK);
-            g.drawRect(sc.realToScreen(sun.getPoint()).getX()-r, sc.realToScreen(sun.getPoint()).getY()-r, 2*sun.getRSun(), 2*sun.getRSun());
+            g.drawRect(sun.getPoint().getX()-r, sun.getPoint().getY()-r, 2*sun.getRSun(), 2*sun.getRSun());
             drawMarkers(g, sun);
         }
     }
     private void drawMarkers(Graphics g, Sun sun) {
-        sun.setMarkers(countMarkers(sun));
+        sun.countMarkers();
         for (Marker m : sun.getMarkers()) {
             drawMarker(g, m);
         }
     }
-    private ArrayList<Marker> countMarkers(Sun sun) {
+   /* private ArrayList<Marker> countMarkers(Sun sun) {
         ArrayList<Marker> markers = new ArrayList<>();
         int r = sun.getRSun();
-        ScreenPoint center = sc.realToScreen(sun.getPoint());
+        ScreenPoint center = sun.getPoint();
         ScreenPoint p = new ScreenPoint(center.getX() - r, center.getY() - r);//верхняя левая точка
-        RealPoint p1 = sc.screenToReal(new ScreenPoint(p.getX(), p.getY())); //верхний левый
-        RealPoint p2 = sc.screenToReal(new ScreenPoint(p.getX()+2*r, p.getY())); //верхнй правый
-        RealPoint p3 = sc.screenToReal(new ScreenPoint(p.getX()+2*r, p.getY()+2*r)); //нижний правый
-        RealPoint p4 = sc.screenToReal(new ScreenPoint(p.getX(), p.getY()+2*r)); //нижний левый
+        ScreenPoint p1 = new ScreenPoint(p.getX(), p.getY()); //верхний левый
+        ScreenPoint p2 = new ScreenPoint(p.getX()+2*r, p.getY()); //верхнй правый
+        ScreenPoint p3 = new ScreenPoint(p.getX()+2*r, p.getY()+2*r); //нижний правый
+        ScreenPoint p4 = new ScreenPoint(p.getX(), p.getY()+2*r); //нижний левый
         markers.add(new Marker(p1, 6, MarkerType.TOP_LEFT));
         markers.add(new Marker(p2, 6, MarkerType.TOP_RIGHT));
         markers.add(new Marker(p3, 6, MarkerType.LOWER_RIGHT));
         markers.add(new Marker(p4, 6, MarkerType.LOWER_LEFT));
         return markers;
-    }
+    }*/
     private void drawMarker(Graphics g, Marker m) {
         g.setColor(m.getC());
-        ScreenPoint mp = sc.realToScreen(m.getPoint());
+        ScreenPoint mp = m.getPoint();
         ScreenPoint p = new ScreenPoint(mp.getX() - 3, mp.getY() - 3);
         g.fillRect(p.getX(), p.getY(), m.getSize(), m.getSize());
     }
@@ -128,9 +133,11 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
             if (e.getButton() == MouseEvent.BUTTON1) {
                 currentSun = find(currSc);
                 if (currentSun == null) {
-                    ScreenPoint currP = new ScreenPoint(e.getX(), e.getY());
-                    currentSun = new Sun(sc.screenToReal(currP), 30);
-                    currentSun.setMarkers(countMarkers(currentSun));
+                    RealSun real = new RealSun(sc.screenToReal(currSc), 30/*0.2*/);
+                    currentSun = new Sun(currSc, real);
+                    currentSun.countMarkers();
+                    //currentSun.setMarkers(countMarkers(currentSun));
+
                     suns.add(currentSun);
                     currentSun = null;
                 }  else {
@@ -149,7 +156,7 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
     private Sun find(ScreenPoint p) {
         for (Sun s : suns) {
             int r = s.getRRays();
-            ScreenPoint sunScP = sc.realToScreen(s.getPoint());
+            ScreenPoint sunScP = s.getPoint();
             if (p.getX() >= sunScP.getX()-r-4 && p.getX() <= sunScP.getX()+r+4 &&
                 p.getY() >= sunScP.getY()-r-4 && p.getY() <= sunScP.getY()+r+4)
                 return s;
@@ -166,9 +173,9 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
         Sun sunToResize = find(p);
         if (sunToResize != null) {
             int r = sunToResize.getRSun();
-            ScreenPoint center = sc.realToScreen(sunToResize.getPoint());
+            ScreenPoint center = sunToResize.getPoint();
             ScreenPoint sunP = new ScreenPoint(center.getX() - r, center.getY() - r);
-                if (sunToResize.isChosen) {
+                if (sunToResize.isChosen()) {
                     if (p.getX() >= sunP.getX()-4 && p.getX() <= sunP.getX()+4 &&
                         p.getY() >= sunP.getY()-4 && p.getY() <= sunP.getY()+4) {
                         setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
@@ -186,7 +193,7 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
                         setCursor(Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
                         return true;
                     } else {
-                        setCursor(Cursor.getDefaultCursor());
+                        //setCursor(Cursor.getDefaultCursor());
                     }
                 }
             }
@@ -197,6 +204,7 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
     public void mousePressed(MouseEvent e) {
         if (e.getButton() == MouseEvent.BUTTON1) { //была 3
             prevDrag = new ScreenPoint(e.getX(), e.getY());
+            marker = findMarker(new ScreenPoint(e.getX(), e.getY()));
         } /*else if (e.getButton() == MouseEvent.BUTTON1) {
             currentLine = new Line(sc.screenToReal(new ScreenPoint(e.getX(), e.getY())),   //начальная точка (в момент нажатия)
                     sc.screenToReal(new ScreenPoint(e.getX(), e.getY())));
@@ -210,6 +218,7 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
             prevDrag = null;
         } else if (e.getButton() == MouseEvent.BUTTON1) {
             prevDrag = null;
+            marker = null;
         }
 
         /*else if (e.getButton() == MouseEvent.BUTTON1) {
@@ -233,7 +242,7 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
         Sun sun = find(p);
         if (sun != null) {
             for (Marker m : sun.getMarkers()) {
-                ScreenPoint mPoint = sc.realToScreen(m.getPoint());
+                ScreenPoint mPoint = m.getPoint();
                 if (p.getX() >= mPoint.getX()-4 && p.getX() <= mPoint.getX()+4 &&
                         p.getY() >= mPoint.getY()-4 && p.getY() <= mPoint.getY()+4)
                     return m;
@@ -241,26 +250,22 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
         }
         return null;
     }
-    /*private int defineMarker(Sun sun, Marker marker) {
-        return sun.getMarkers().indexOf(marker);
-    }*/
 
     private Sun sunForResize;
     private ScreenPoint start = null;
     private ScreenPoint end = null;
+    private Marker marker = null;
     @Override
     public void mouseDragged(MouseEvent e) {
         ScreenPoint curr = new ScreenPoint(e.getX(), e.getY());
 
         sunForResize = find(curr);
-        if (sunForResize!= null && sunForResize.isChosen) {
+        if (sunForResize!= null && sunForResize.isChosen()) {
             if (getCursor().getType() == Cursor.CROSSHAIR_CURSOR) {
-                ScreenPoint delta = new ScreenPoint(
-                        curr.getX() - prevDrag.getX(),
-                        curr.getY() - prevDrag.getY());
-                Marker marker = findMarker(curr);
-                ScreenPoint center = sc.realToScreen(sunForResize.getPoint());
-                int r = sunForResize.getRSun();
+
+                //ScreenPoint center = sc.realToScreen(sunForResize.getPoint());
+                ScreenPoint center = sunForResize.getPoint();
+                int r = (int)sunForResize.getRealSun().getRSun();
                 if (marker != null) {
                     if (marker.getType() == MarkerType.TOP_LEFT) {
                         start = new ScreenPoint(curr.getX(), curr.getY());
@@ -276,37 +281,39 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
                         end = new ScreenPoint(center.getX() + r, curr.getY());
                     }
                 }
-            }
-            if (start != null && end != null) {
-                Marker marker = findMarker(curr);
-                int r1 = Math.abs(end.getX() - start.getX())/2;
-                int r2 = Math.abs(end.getY() - start.getY())/2;
-                int r = Math.max(r1, r2);
-                if (marker != null) {
-                    if (marker.getType() == MarkerType.TOP_LEFT) {
-                        ScreenPoint newCenter = new ScreenPoint((end.getX() - r) , end.getY() - r);
-                        sunForResize.setPoint(sc.screenToReal(newCenter));
-                    } else if (marker.getType() == MarkerType.TOP_RIGHT) {
-                        ScreenPoint newCenter = new ScreenPoint((start.getX() + r) , end.getY() - r);
-                        sunForResize.setPoint(sc.screenToReal(newCenter));
-                    } else if (marker.getType() == MarkerType.LOWER_RIGHT) {
-                        ScreenPoint newCenter = new ScreenPoint((start.getX() + r) , start.getY() + r);
-                        sunForResize.setPoint(sc.screenToReal(newCenter));
-                    } else if (marker.getType() == MarkerType.LOWER_LEFT) {
-                        ScreenPoint newCenter = new ScreenPoint((end.getX() - r) , start.getY() + r);
-                        sunForResize.setPoint(sc.screenToReal(newCenter));
+                if (start != null && end != null) {
+                    //Marker marker = findMarker(curr);
+                    int r1 = Math.abs(end.getX() - start.getX())/2;
+                    int r2 = Math.abs(end.getY() - start.getY())/2;
+                    int r3 = Math.max(r1, r2);
+                    if (marker != null) {
+                        if (marker.getType() == MarkerType.TOP_LEFT) {
+                            ScreenPoint newCenter = new ScreenPoint((end.getX() - r3) , end.getY() - r3);
+                            //sunForResize.setPoint(sc.screenToReal(newCenter));
+                            sunForResize.setPoint(newCenter, sc.screenToReal(newCenter));
+                        } else if (marker.getType() == MarkerType.TOP_RIGHT) {
+                            ScreenPoint newCenter = new ScreenPoint((start.getX() + r3) , end.getY() - r3);
+                            sunForResize.setPoint(newCenter, sc.screenToReal(newCenter));
+                        } else if (marker.getType() == MarkerType.LOWER_RIGHT) {
+                            ScreenPoint newCenter = new ScreenPoint((start.getX() + r3) , start.getY() + r3);
+                            sunForResize.setPoint(newCenter, sc.screenToReal(newCenter));
+                        } else if (marker.getType() == MarkerType.LOWER_LEFT) {
+                            ScreenPoint newCenter = new ScreenPoint((end.getX() - r3) , start.getY() + r3);
+                            sunForResize.setPoint(newCenter, sc.screenToReal(newCenter));
+                        }
                     }
+                    sunForResize.setRSun(r3);
+                    sunForResize.setRRays(2 * r3);
                 }
-                sunForResize.setRSun(r);
-                sunForResize.setRRays(2 * r);
             }
+
 
         }
 
         currentSun = find(curr);
         if (!isMarker(curr)) {
-            if (currentSun != null && !currentSun.isChosen) {   //перетаскивание солнышка
-                currentSun.setPoint(sc.screenToReal(curr));
+            if (currentSun != null && !currentSun.isChosen()) {   //перетаскивание солнышка
+                currentSun.setPoint(curr, sc.screenToReal(curr));
                 repaint();
             } else if (prevDrag != null && currentSun == null) {                  //перетаскивание всего
                 ScreenPoint delta = new ScreenPoint(
@@ -336,10 +343,9 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
         if (find(p) != null) {
             if (isMarker(p)) {
                 sunForResize = find(p);
-
             }
         } else {
-            setCursor(Cursor.getDefaultCursor());
+            //setCursor(Cursor.getDefaultCursor());
         }
     }
 
@@ -352,25 +358,29 @@ public class DrawPanel extends JPanel implements MouseListener, MouseMotionListe
             scale *= coef;
         }
         ArrayList<RealPoint> centers = new ArrayList<>();
-        ArrayList<RealPoint> helpPoints = new ArrayList<>();
+        //ArrayList<RealPoint> helpPoints = new ArrayList<>();
         for (Sun s : suns) {
-            centers.add(s.getPoint());
-            ScreenPoint c = sc.realToScreen(s.getPoint());
-            helpPoints.add(sc.screenToReal(new ScreenPoint(c.getX() - s.getRSun(), c.getY() - s.getRSun())));
+            centers.add(sc.screenToReal(s.getPoint()));
+            /*ScreenPoint c = s.getPoint();
+            helpPoints.add(sc.screenToReal(new ScreenPoint(c.getX() - s.getRSun(), c.getY() - s.getRSun())));*/
         }
         sc.setW(sc.getW() * scale);
         sc.setH(sc.getH() * scale);
         for (int i = 0; i < suns.size(); i++) {
+            double r = suns.get(i).getRealSun().getRSun() / scale;
             ScreenPoint c = sc.realToScreen(centers.get(i));
+            suns.get(i).setPoint(c, sc.screenToReal(c));
+            suns.get(i).setRSun(r);
+            suns.get(i).setRRays(2 * r);
+            /*ScreenPoint c = sc.realToScreen(centers.get(i));
             ScreenPoint h = sc.realToScreen(helpPoints.get(i));
             int r1 = Math.abs(c.getX() - h.getX());
             int r2 = Math.abs(c.getY() - h.getY());
-            suns.get(i).setRSun(Math.min(r1, r2));
+            int r = Math.max(r1, r2);
+            suns.get(i).setPoint(c, sc.screenToReal(c));
+            suns.get(i).setRSun(r);
+            suns.get(i).setRRays(2 * r);*/
         }
-
-            //int r = (int)(s.getRSun() / scale); //???
-            //s.setRSun(r);
-
         repaint();
     }
 /*rcoef = s.getRSun() / oldW;
